@@ -122,5 +122,74 @@ namespace CinemaAppTest.Controllers
             Assert.IsType<NotFoundResult>(result);
         }
 
+        [Fact]
+        public async Task PostMovie_ReturnsCreatedAtAction_WhenModelIsValid()
+        {
+            // Arrange
+            var newMovie = new Movie
+            {
+                Title = "New Movie",
+                Genre = "Action",
+                Distributor = "Distributor1",
+                CountryOrigin = "USA",
+                Duration = 120,
+                ReleaseYear = 2022
+            };
+
+            _mockRepo.Setup(repo => repo.AddAsync(It.IsAny<Movie>())).Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _controller.PostMovie(newMovie) as CreatedAtActionResult;
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.IsType<CreatedAtActionResult>(result);
+            Assert.Equal("GetMovie", result.ActionName);
+            Assert.Equal(newMovie.Id, result.RouteValues["id"]);
+            Assert.Equal(newMovie, result.Value);
+        }
+
+        [Fact]
+        public async Task PostMovie_ReturnsBadRequest_WhenModelStateIsInvalid()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("Title", "The Title field is required.");
+
+            var invalidMovie = new Movie
+            {
+                // Missing Title to simulate invalid state
+                Genre = "Action",
+                Distributor = "Distributor1",
+                CountryOrigin = "USA",
+                Duration = 120,
+                ReleaseYear = 2022
+            };
+
+            // Act
+            var result = await _controller.PostMovie(invalidMovie) as BadRequestObjectResult;
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.IsType<BadRequestObjectResult>(result);
+            Assert.NotNull(result.Value);
+
+            // Use reflection to get the anonymous type properties
+            var valueType = result.Value.GetType();
+
+            // Get the 'Message' property
+            var messageProperty = valueType.GetProperty("Message");
+            Assert.NotNull(messageProperty);
+            var messageValue = messageProperty.GetValue(result.Value) as string;
+            Assert.Equal("Invalid model state.", messageValue);
+
+            // Get the 'Errors' property
+            var errorsProperty = valueType.GetProperty("Errors");
+            Assert.NotNull(errorsProperty);
+            var errorsValue = errorsProperty.GetValue(result.Value) as List<string>;
+            Assert.NotNull(errorsValue);
+            Assert.Contains("The Title field is required.", errorsValue);
+        }
+
+
     }
 }
