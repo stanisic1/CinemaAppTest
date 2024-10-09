@@ -159,3 +159,4 @@ C:\Users\Rados\Desktop\.NET Development\Modul 3\CinemaAppTest\obj\Debug\net7.0\r
 C:\Users\Rados\Desktop\.NET Development\Modul 3\CinemaAppTest\obj\Debug\net7.0\CinemaAppTest.pdb
 C:\Users\Rados\Desktop\.NET Development\Modul 3\CinemaAppTest\obj\Debug\net7.0\CinemaAppTest.genruntimeconfig.cache
 C:\Users\Rados\Desktop\.NET Development\Modul 3\CinemaAppTest\obj\Debug\net7.0\ref\CinemaAppTest.dll
+C:\Users\Rados\Desktop\.NET Development\Modul 3\CinemaAppTest\obj\Debug\net7.0\CinemaAppTest.sourcelink.json
