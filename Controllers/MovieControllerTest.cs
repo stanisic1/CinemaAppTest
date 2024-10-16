@@ -190,6 +190,99 @@ namespace CinemaAppTest.Controllers
             Assert.Contains("The Title field is required.", errorsValue);
         }
 
+        [Fact]
+        public async Task PutMovie_ReturnsOk_WhenMovieIsUpdatedSuccessfully()
+        {
+            // Arrange
+            var movie = new Movie { Id = 1, Title = "Sample Movie" };
+            _mockRepo.Setup(repo => repo.UpdateAsync(movie)).Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _controller.PutMovie(movie.Id, movie);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnedMovie = Assert.IsType<Movie>(okResult.Value);
+            Assert.Equal(movie, returnedMovie);
+        }
+
+        [Fact]
+        public async Task PutMovie_ReturnsBadRequest_WhenExceptionIsThrown()
+        {
+            // Arrange
+            var movie = new Movie { Id = 1, Title = "Sample Movie" };
+            _mockRepo.Setup(repo => repo.UpdateAsync(movie)).ThrowsAsync(new Exception("Update failed"));
+
+            // Act
+            var result = await _controller.PutMovie(movie.Id, movie);
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("Failed to update telephone. Error: Update failed", badRequestResult.Value);
+        }
+
+        [Fact]
+        public async Task PutMovie_ReturnsBadRequest_WhenIdDoesNotMatchMovieId()
+        {
+            // Arrange
+            var movie = new Movie { Id = 1, Title = "Sample Movie" };
+
+            // Act
+            var result = await _controller.PutMovie(2, movie);
+
+            // Assert
+            Assert.IsType<BadRequestResult>(result);
+        }
+
+        [Fact]
+        public async Task DeleteMovie_PerformsLogicalDelete_WhenMovieHasProjections()
+        {
+            // Arrange
+            int movieId = 1;
+            var movie = new Movie { Id = movieId, Title = "Sample Movie" };
+            _mockRepo.Setup(repo => repo.GetByIdAsync(movieId)).ReturnsAsync(movie);
+            _mockRepo.Setup(repo => repo.HasProjectionsAsync(movieId)).ReturnsAsync(true);
+
+            // Act
+            var result = await _controller.DeleteMovie(movieId);
+
+            // Assert
+            _mockRepo.Verify(repo => repo.LogicalDeleteAsync(movie), Times.Once);
+            _mockRepo.Verify(repo => repo.DeleteAsync(movie), Times.Never);
+            Assert.IsType<NoContentResult>(result);
+        }
+
+        [Fact]
+        public async Task DeleteMovie_PerformsPhysicalDelete_WhenMovieHasNoProjections()
+        {
+            // Arrange
+            int movieId = 1;
+            var movie = new Movie { Id = movieId, Title = "Sample Movie" };
+            _mockRepo.Setup(repo => repo.GetByIdAsync(movieId)).ReturnsAsync(movie);
+            _mockRepo.Setup(repo => repo.HasProjectionsAsync(movieId)).ReturnsAsync(false);
+
+            // Act
+            var result = await _controller.DeleteMovie(movieId);
+
+            // Assert
+            _mockRepo.Verify(repo => repo.DeleteAsync(movie), Times.Once);
+            _mockRepo.Verify(repo => repo.LogicalDeleteAsync(movie), Times.Never);
+            Assert.IsType<NoContentResult>(result);
+        }
+
+        [Fact]
+        public async Task DeleteMovie_ReturnsNotFound_WhenMovieDoesNotExist()
+        {
+            // Arrange
+            int movieId = 1;
+            _mockRepo.Setup(repo => repo.GetByIdAsync(movieId)).ReturnsAsync((Movie)null);
+
+            // Act
+            var result = await _controller.DeleteMovie(movieId);
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
 
     }
 }
